@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { LayoutChangeEvent, PanResponder, Pressable, StyleSheet, Text, View } from 'react-native';
+import { bedForChapter, useMusic } from '../audio/MusicProvider';
 import { chapterById } from '../chapters';
 import { getLevel } from '../levels';
 import { aimFromDrag, scale } from '../physics';
@@ -7,6 +8,7 @@ import { createSim, stepSim } from '../sim';
 import { chapterTheme, colors } from '../theme';
 import type { Sim, Vec } from '../types';
 import { Playfield } from './Playfield';
+import { SoundToggle } from './SoundToggle';
 
 type Props = {
   levelId: number;
@@ -27,6 +29,7 @@ export function GameScreen({ levelId, onWin, onExit }: Props) {
   const level = useMemo(() => getLevel(levelId)!, [levelId]);
   const chapter = chapterById(level.chapter);
   const theme = chapterTheme[level.chapter];
+  const { setBed } = useMusic();
 
   const simRef = useRef<Sim>(createSim(level));
   const worldRef = useRef(0);
@@ -98,6 +101,11 @@ export function GameScreen({ levelId, onWin, onExit }: Props) {
   }, []);
 
   const status = simRef.current.status;
+  const bed = bedForChapter(level.chapter);
+  useEffect(() => {
+    setBed(bed, status === 'won');
+  }, [bed, status, setBed]);
+
   useEffect(() => {
     if (status !== 'won') return;
     const t = setTimeout(() => onWin(levelId), 900);
@@ -147,9 +155,12 @@ export function GameScreen({ levelId, onWin, onExit }: Props) {
   return (
     <View style={styles.root}>
       <View style={styles.hud}>
-        <Pressable onPress={onExit} hitSlop={10} accessibilityRole="button" accessibilityLabel="Back to levels">
-          <Text style={styles.hudLink}>← Menu</Text>
-        </Pressable>
+        <View style={styles.hudLeft}>
+          <Pressable onPress={onExit} hitSlop={10} accessibilityRole="button" accessibilityLabel="Back to levels">
+            <Text style={styles.hudLink}>← Menu</Text>
+          </Pressable>
+          <SoundToggle />
+        </View>
         <View style={styles.hudCenter}>
           <Text style={[styles.kicker, { color: theme.kicker }]}>
             {chapter.index}  {chapter.title.toUpperCase()}
@@ -228,7 +239,8 @@ const styles = StyleSheet.create({
     borderBottomWidth: 2,
     borderBottomColor: colors.trainLine,
   },
-  hudLink: { color: colors.aim, fontWeight: '700', width: 64 },
+  hudLeft: { width: 72, gap: 6 },
+  hudLink: { color: colors.aim, fontWeight: '700' },
   hudCenter: { flex: 1 },
   kicker: { fontSize: 10, fontWeight: '800', letterSpacing: 1.4 },
   hudTitle: { color: colors.text, fontWeight: '900', fontSize: 16 },

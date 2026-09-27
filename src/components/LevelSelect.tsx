@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useMusic } from '../audio/MusicProvider';
 import { CHAPTERS } from '../chapters';
 import { LEVELS } from '../levels';
 import { chapterTheme, colors } from '../theme';
+import { SoundToggle } from './SoundToggle';
 
 type Props = {
   unlocked: number;
@@ -11,6 +13,11 @@ type Props = {
 };
 
 export function LevelSelect({ unlocked, onBack, onPick }: Props) {
+  const { setBed } = useMusic();
+  useEffect(() => {
+    setBed('shift', false);
+  }, [setBed]);
+
   return (
     <View style={styles.root}>
       <View style={styles.header}>
@@ -18,7 +25,7 @@ export function LevelSelect({ unlocked, onBack, onPick }: Props) {
           <Text style={styles.back}>← Back</Text>
         </Pressable>
         <Text style={styles.title}>Departures</Text>
-        <View style={{ width: 56 }} />
+        <SoundToggle />
       </View>
       <ScrollView contentContainerStyle={styles.list}>
         {CHAPTERS.map((ch) => {

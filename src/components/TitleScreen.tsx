@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useMusic } from '../audio/MusicProvider';
 import { CHAPTERS } from '../chapters';
 import { colors } from '../theme';
+import { SoundToggle } from './SoundToggle';
 
 type Props = {
   onPlay: () => void;
@@ -9,8 +11,17 @@ type Props = {
 };
 
 export function TitleScreen({ onPlay, onLevels }: Props) {
+  const { setBed } = useMusic();
+  useEffect(() => {
+    setBed('shift', false);
+  }, [setBed]);
+
   return (
     <ScrollView style={styles.root} contentContainerStyle={styles.content}>
+      <View style={styles.topBar}>
+        <Text style={styles.radio}>SHIFT RADIO</Text>
+        <SoundToggle />
+      </View>
       <View style={styles.hero}>
         <View style={styles.tube} />
         <Text style={styles.kicker}>SALARYMAN SHIFT</Text>
@@ -39,6 +50,7 @@ export function TitleScreen({ onPlay, onLevels }: Props) {
         <Text style={styles.cardLine}>Coffee slicks speed the slide. Elevator shafts are safe — they lift you.</Text>
         <Text style={styles.cardLine}>A red REVIEW stamp sends you back to your desk to retry.</Text>
         <Text style={styles.cardHint}>Reach the amber bottle. Meds unlocked. The inbox can wait.</Text>
+        <Text style={styles.cardLine}>SND mutes the radio. The choice stays on this phone.</Text>
       </View>
 
       <Pressable style={styles.primary} onPress={onPlay} accessibilityRole="button">
@@ -55,7 +67,9 @@ export function TitleScreen({ onPlay, onLevels }: Props) {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bgDeep },
-  content: { paddingHorizontal: 22, paddingTop: 64, paddingBottom: 36, gap: 16 },
+  content: { paddingHorizontal: 22, paddingTop: 52, paddingBottom: 36, gap: 16 },
+  topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  radio: { color: colors.textMuted, fontSize: 11, fontWeight: '800', letterSpacing: 1.4 },
   hero: { alignItems: 'center', gap: 8 },
   tube: {
     width: 140,

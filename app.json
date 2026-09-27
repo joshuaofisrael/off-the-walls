@@ -43,6 +43,15 @@
           "image": "./assets/splash.png",
           "imageWidth": 200
         }
+      ],
+      [
+        "expo-audio",
+        {
+          "microphonePermission": false,
+          "recordAudioAndroid": false,
+          "enableBackgroundPlayback": false,
+          "enableBackgroundRecording": false
+        }
       ]
     ]
   }

@@ -23,6 +23,16 @@ The app is portrait only and stays inside the Expo Go runtime (no custom native 
 - **Release** to launch.
 - Max ricochets off partitions, train doors, and meeting paddles until he reaches the bottle (**win**) or the attempt is sent back to the desk (**retry**).
 - The HUD shows the chapter, the level, bounces left (⚡), and a cosmetic **UNPAID** clock. The clock does not end the attempt.
+- **SND / MUTE** on the title screen, the departures board, and the in-level HUD turns the radio off. The choice is saved on the device.
+
+## Music
+
+Two original loops play in the background. They were synthesized for this game (`npm run compose-bgm` writes `assets/audio/*.wav`). They are not taken from Karoshi or any other soundtrack.
+
+- **Fluorescent** — title, level select, Morning, Commute, Office, and Last Train. Slow drone, sparse lead.
+- **Overtime** — Overtime Clock and Boss Ping. Tighter pulse, a sour interval. The beds crossfade when you enter or leave those chapters.
+
+The win banner ducks the volume. On iOS the hardware silent switch is respected. Playback uses `expo-audio` (included in Expo Go for SDK 57). `expo-av` is not part of this SDK.
 
 ## Surfaces
 
@@ -83,6 +93,7 @@ Progress unlocks one stop at a time and is stored on the device.
 
 - Expo SDK 57 + TypeScript
 - Custom 2D bounce physics (no native modules — works in Expo Go)
+- Original synthesized BGM via `expo-audio` (no microphone permission, no background playback)
 - Portrait only
 
 `npx tsc --noEmit` typechecks the app. `npx tsx scripts/solve-levels.ts` checks copy, spawn clearance, and that every level has a winning launch.
