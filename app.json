@@ -1,0 +1,49 @@
+{
+  "expo": {
+    "name": "Off The Walls",
+    "slug": "off-the-walls",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "scheme": "offthewalls",
+    "description": "Bounce Max off the walls to reach his ADHD meds. A warm, chaotic, affirming pinball-style puzzle game.",
+    "primaryColor": "#1e1b4b",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#2d1b69"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.joshuaisraelventures.offthewalls",
+      "buildNumber": "1",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "com.joshuaisraelventures.offthewalls",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "backgroundColor": "#2d1b69",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      }
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#2d1b69",
+          "image": "./assets/splash.png",
+          "imageWidth": 200
+        }
+      ]
+    ]
+  }
+}
