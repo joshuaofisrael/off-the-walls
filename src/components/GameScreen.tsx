@@ -19,8 +19,10 @@ import {
   resolveCircleWall,
   scale,
 } from '../physics';
-import { colors } from '../theme';
+import { colors, fonts } from '../theme';
 import type { Distractor, GameStatus, Vec, Wall } from '../types';
+import { MAX_ANCHOR_Y, MAX_VIEW, MaxSprite } from './MaxSprite';
+import { CourtSurface, FieldPiece, MedsBottle, Notice, OfficeBackdrop } from './office';
 
 type Props = {
   levelId: number;
@@ -54,6 +56,8 @@ export function GameScreen({ levelId, onWin, onExit }: Props) {
   const rafRef = useRef<number | null>(null);
   const lastTsRef = useRef<number | null>(null);
   const scaleRef = useRef({ sx: 1, sy: 1, ox: 0, oy: 0 });
+  const trailRef = useRef<Vec[]>([]);
+  const shakeRef = useRef(0);
 
   useEffect(() => {
     statusRef.current = status;
@@ -72,6 +76,8 @@ export function GameScreen({ levelId, onWin, onExit }: Props) {
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
     rafRef.current = null;
     lastTsRef.current = null;
+    trailRef.current = [];
+    shakeRef.current = 0;
     setStatus('aiming');
     setPos({ ...level.start });
     setVel({ x: 0, y: 0 });
@@ -94,7 +100,6 @@ export function GameScreen({ levelId, onWin, onExit }: Props) {
     setLayout({ w: width, h: height });
     const sx = width / level.width;
     const sy = height / level.height;
-    // letterbox to keep aspect
     const s = Math.min(sx, sy);
     const pw = level.width * s;
     const ph = level.height * s;
@@ -106,10 +111,6 @@ export function GameScreen({ levelId, onWin, onExit }: Props) {
     };
   };
 
-  const toScreen = (v: Vec) => {
-    const { sx, sy, ox, oy } = scaleRef.current;
-    return { x: ox + v.x * sx, y: oy + v.y * sy };
-  };
   const toLogical = (x: number, y: number): Vec => {
     const { sx, sy, ox, oy } = scaleRef.current;
     return { x: (x - ox) / sx, y: (y - oy) / sy };
@@ -135,7 +136,6 @@ export function GameScreen({ levelId, onWin, onExit }: Props) {
       let p = { ...posRef.current };
       let v = { ...velRef.current };
 
-      // substeps for reliability
       const steps = 3;
       const sdt = dt / steps;
       let bouncedThisFrame = false;
@@ -157,7 +157,6 @@ export function GameScreen({ levelId, onWin, onExit }: Props) {
                 wall.y + wall.h / 2,
                 Math.min(wall.w, wall.h) / 2 + 2,
               ) ||
-              // also rect overlap for thin hazards
               (p.x + level.playerRadius > wall.x &&
                 p.x - level.playerRadius < wall.x + wall.w &&
                 p.y + level.playerRadius > wall.y &&
@@ -176,7 +175,6 @@ export function GameScreen({ levelId, onWin, onExit }: Props) {
           }
         }
 
-        // keep in bounds soft clamp
         p.x = clamp(p.x, level.playerRadius, level.width - level.playerRadius);
         p.y = clamp(p.y, level.playerRadius, level.height - level.playerRadius);
 
@@ -197,7 +195,6 @@ export function GameScreen({ levelId, onWin, onExit }: Props) {
         }
       }
 
-      // distractors
       const sinceLaunch = elapsedRef.current - launchAtRef.current;
       const dist = level.distractors ?? [];
       for (const d of dist) {
@@ -218,32 +215,45 @@ export function GameScreen({ levelId, onWin, onExit }: Props) {
         const left = bouncesRef.current - 1;
         bouncesRef.current = left;
         setBouncesLeft(Math.max(0, left));
+        shakeRef.current = Math.min(5.5, shakeRef.current + 4.2);
+      }
+
+      shakeRef.current *= 0.84;
+      if (shakeRef.current < 0.25) shakeRef.current = 0;
+
+      const lastTrail = trailRef.current[trailRef.current.length - 1];
+      if (!lastTrail || Math.hypot(p.x - lastTrail.x, p.y - lastTrail.y) > 9) {
+        trailRef.current.push({ x: p.x, y: p.y });
+        if (trailRef.current.length > 12) trailRef.current.shift();
       }
 
       setPos(p);
       setVel(v);
 
       if (hitGoal) {
+        shakeRef.current = 0;
         setStatus('won');
         setVel({ x: 0, y: 0 });
-        setMessage('Meds unlocked! 🎉');
+        setMessage('Meds unlocked.');
         return;
       }
       if (hitHazard) {
+        shakeRef.current = 0;
         setStatus('lost');
         setVel({ x: 0, y: 0 });
         setMessage('Oof — hazard. Reset and ricochet again.');
         return;
       }
       if (bouncedThisFrame && bouncesRef.current < 0) {
+        shakeRef.current = 0;
         setStatus('lost');
         setVel({ x: 0, y: 0 });
         setMessage('Out of bounces — try a sharper angle!');
         return;
       }
 
-      // stalled
       if (len(v) < 12 && elapsedRef.current - launchAtRef.current > 900) {
+        shakeRef.current = 0;
         setStatus('lost');
         setMessage('Stopped short — more power next time.');
         return;
@@ -267,6 +277,7 @@ export function GameScreen({ levelId, onWin, onExit }: Props) {
       setMessage('Go Max go!');
       launchAtRef.current = elapsedRef.current;
       lastTsRef.current = null;
+      trailRef.current = [];
       rafRef.current = requestAnimationFrame(step);
     },
     [step],
@@ -313,27 +324,47 @@ export function GameScreen({ levelId, onWin, onExit }: Props) {
   const { sx, ox, oy } = scaleRef.current;
   const walls = currentWalls(elapsed);
   void wallsTick;
+  void layout;
 
   const aim =
     status === 'aiming' && aimFinger
       ? aimFromDrag(pos, aimFinger)
       : null;
 
+  const flying = status === 'flying';
+  const rotation =
+    flying && len(vel) > 20 ? (Math.atan2(vel.y, vel.x) * 180) / Math.PI + 90 : 0;
+  const spriteH = level.playerRadius * 4.55 * sx;
+  const spriteW = spriteH * (MAX_VIEW.w / MAX_VIEW.h);
+  const shake = shakeRef.current;
+  const shx = shake ? Math.sin(elapsed * 0.045) * shake : 0;
+  const shy = shake ? Math.cos(elapsed * 0.07) * shake : 0;
+  const trail = trailRef.current;
+  const fieldW = level.width * sx;
+  const fieldH = level.height * sx;
+
   return (
     <View style={styles.root}>
+      <OfficeBackdrop />
       <View style={styles.hud}>
-        <Pressable onPress={onExit} hitSlop={10}>
-          <Text style={styles.hudLink}>← Menu</Text>
+        <Pressable onPress={onExit} hitSlop={10} style={styles.menuBtn}>
+          <Text style={styles.menuText}>MENU</Text>
         </Pressable>
         <View style={styles.hudCenter}>
-          <Text style={styles.hudTitle}>
-            {level.id}. {level.name}
+          <Text style={styles.hudKicker}>GATE {String(level.id).padStart(2, '0')}</Text>
+          <Text style={styles.hudTitle} numberOfLines={1}>
+            {level.name}
           </Text>
           <Text style={styles.hudSub} numberOfLines={1}>
             {message}
           </Text>
         </View>
-        <Text style={styles.hudBounces}>⚡ {Math.max(0, bouncesLeft)}</Text>
+        <View style={styles.bounceBox}>
+          <Text style={styles.bounceLabel}>LEFT</Text>
+          <Text style={styles.bounceValue}>
+            {String(Math.max(0, bouncesLeft)).padStart(2, '0')}
+          </Text>
+        </View>
       </View>
 
       <View style={styles.play} onLayout={onLayout} {...pan.panHandlers}>
@@ -343,165 +374,152 @@ export function GameScreen({ levelId, onWin, onExit }: Props) {
             {
               left: ox,
               top: oy,
-              width: level.width * sx,
-              height: level.height * sx,
+              width: fieldW,
+              height: fieldH,
+              transform: [{ translateX: shx }, { translateY: shy }],
             },
           ]}
         >
-          {/* walls */}
-          {walls.map((w) => {
-            const color =
-              w.kind === 'pad'
-                ? colors.pad
-                : w.kind === 'hazard'
-                  ? colors.hazard
-                  : w.kind === 'moving'
-                    ? colors.wallDark
-                    : colors.wall;
+          <CourtSurface width={fieldW} height={fieldH} />
+
+          {trail.map((t, i) => {
+            const k = (i + 1) / trail.length;
+            const d = (2.2 + k * 4.2) * sx;
             return (
               <View
-                key={w.id}
+                key={`trail-${i}`}
                 style={{
+                  pointerEvents: 'none',
                   position: 'absolute',
-                  left: (w.x - 0) * sx,
-                  top: (w.y - 0) * sx,
-                  width: w.w * sx,
-                  height: w.h * sx,
-                  backgroundColor: color,
-                  borderRadius: 4,
-                  borderWidth: w.kind === 'pad' ? 2 : 0,
-                  borderColor: colors.padDark,
+                  left: t.x * sx - d / 2,
+                  top: t.y * sx - d / 2,
+                  width: d,
+                  height: d,
+                  borderRadius: 99,
+                  backgroundColor: k > 0.65 ? colors.fluorescent : colors.accent,
+                  opacity: 0.08 + k * 0.28,
                 }}
               />
             );
           })}
 
-          {/* goal pill bottle */}
+          {walls.map((w) => (
+            <FieldPiece key={w.id} wall={w} s={sx} />
+          ))}
+
           <View
             style={{
+              pointerEvents: 'none',
+              position: 'absolute',
+              left: (pos.x - level.playerRadius * 1.05) * sx,
+              top: (pos.y + level.playerRadius * 0.95) * sx,
+              width: level.playerRadius * 2.1 * sx,
+              height: level.playerRadius * 0.48 * sx,
+              borderRadius: 99,
+              backgroundColor: '#000',
+              opacity: flying ? 0.16 : 0.32,
+            }}
+          />
+
+          <View
+            style={{
+              pointerEvents: 'none',
               position: 'absolute',
               left: (level.goal.x - level.goalRadius) * sx,
               top: (level.goal.y - level.goalRadius) * sx,
               width: level.goalRadius * 2 * sx,
               height: level.goalRadius * 2 * sx,
-              alignItems: 'center',
-              justifyContent: 'center',
             }}
           >
-            <View
-              style={{
-                width: level.goalRadius * 1.2 * sx,
-                height: level.goalRadius * 1.6 * sx,
-                backgroundColor: colors.goal,
-                borderRadius: 6,
-                borderWidth: 2,
-                borderColor: '#94a3b8',
-                alignItems: 'center',
-              }}
-            >
-              <View
-                style={{
-                  marginTop: -6 * sx,
-                  width: level.goalRadius * 0.9 * sx,
-                  height: 10 * sx,
-                  backgroundColor: colors.goalCap,
-                  borderRadius: 3,
-                }}
-              />
-              <Text style={{ fontSize: 10 * sx, marginTop: 2 }}>💊</Text>
-            </View>
+            <MedsBottle size={level.goalRadius * 2 * sx} />
           </View>
 
-          {/* aim line (dotted path — RN-safe, no transformOrigin) */}
           {aim && (
             <>
               {Array.from({ length: 8 }).map((_, i) => {
-                const dist = (Math.min(aim.drag, 140) * (i + 1)) / 8;
+                const dist =
+                  level.playerRadius * 2.15 + (Math.min(aim.drag, 140) * (i + 1)) / 8;
+                const dot = (3.2 + i * 0.35) * sx;
                 return (
                   <View
                     key={`aim-${i}`}
                     style={{
+                      pointerEvents: 'none',
                       position: 'absolute',
-                      left: (pos.x + aim.dir.x * dist - 3) * sx,
-                      top: (pos.y + aim.dir.y * dist - 3) * sx,
-                      width: 6 * sx,
-                      height: 6 * sx,
-                      borderRadius: 99,
-                      backgroundColor: colors.aim,
-                      opacity: 0.35 + i * 0.08,
+                      left: (pos.x + aim.dir.x * dist) * sx - dot / 2,
+                      top: (pos.y + aim.dir.y * dist) * sx - dot / 2,
+                      width: dot,
+                      height: dot,
+                      borderRadius: 1,
+                      backgroundColor: i > 5 ? colors.accent : colors.fluorescent,
+                      opacity: 0.28 + i * 0.08,
+                      transform: [{ rotate: '45deg' }],
                     }}
                   />
                 );
               })}
-              <Text
+              <View
                 style={{
+                  pointerEvents: 'none',
                   position: 'absolute',
-                  left: pos.x * sx + 10,
-                  top: pos.y * sx - 28,
-                  color: colors.aim,
-                  fontWeight: '800',
-                  fontSize: 12,
+                  left: pos.x * sx - 28,
+                  top: (pos.y - level.playerRadius * 2.6) * sx,
+                  paddingHorizontal: 7,
+                  paddingVertical: 3,
+                  borderRadius: 3,
+                  backgroundColor: 'rgba(8,10,14,0.82)',
+                  borderWidth: StyleSheet.hairlineWidth,
+                  borderColor: colors.panelLine,
                 }}
               >
-                PWR {Math.round((aim.power / 780) * 100)}%
-              </Text>
+                <Text style={styles.powerText}>
+                  PWR {Math.round((aim.power / 780) * 100)}
+                </Text>
+              </View>
             </>
           )}
 
-          {/* Max */}
           <View
             style={{
+              pointerEvents: 'none',
               position: 'absolute',
-              left: (pos.x - level.playerRadius) * sx,
-              top: (pos.y - level.playerRadius) * sx,
-              width: level.playerRadius * 2 * sx,
-              height: level.playerRadius * 2 * sx,
-              borderRadius: 999,
-              backgroundColor: colors.max,
-              borderWidth: 2,
-              borderColor: colors.maxOutline,
-              alignItems: 'center',
-              justifyContent: 'center',
+              left: pos.x * sx - spriteW / 2,
+              top: pos.y * sx - spriteH * MAX_ANCHOR_Y,
             }}
           >
-            <Text style={{ fontSize: level.playerRadius * 1.1 * sx }}>😄</Text>
+            <MaxSprite height={spriteH} pose={flying ? 'flight' : 'idle'} rotation={rotation} />
           </View>
 
-          {/* notification distractors */}
           {notifies.map((n) => (
             <View
               key={n.id}
               style={{
+                pointerEvents: 'none',
                 position: 'absolute',
                 left: n.x * sx,
                 top: n.y * sx,
-                backgroundColor: colors.notify,
-                borderColor: colors.notifyBorder,
-                borderWidth: 1,
-                borderRadius: 10,
-                paddingHorizontal: 8,
-                paddingVertical: 6,
-                maxWidth: 160 * sx,
               }}
             >
-              <Text style={{ color: '#e2e8f0', fontSize: 11, fontWeight: '700' }}>
-                {n.text.trim()}
-              </Text>
+              <Notice text={n.text} maxWidth={168 * sx} />
             </View>
           ))}
         </View>
 
         {status === 'aiming' && !aimFinger && (
-          <Text style={styles.hint}>Drag from Max to aim, release to launch</Text>
+          <Text style={styles.hint}>Drag to aim  ·  release to launch</Text>
         )}
       </View>
 
       {(status === 'won' || status === 'lost') && (
         <View style={styles.overlay}>
           <View style={styles.modal}>
-            <Text style={styles.modalEmoji}>{status === 'won' ? '💊✨' : '🌀'}</Text>
+            {status === 'won' ? (
+              <MedsBottle size={72} />
+            ) : (
+              <Text style={styles.modalKicker}>AGAIN</Text>
+            )}
             <Text style={styles.modalTitle}>
-              {status === 'won' ? 'Meds Unlocked!' : 'Almost — reset'}
+              {status === 'won' ? 'Meds Unlocked' : 'Almost — reset'}
             </Text>
             <Text style={styles.modalBody}>
               {status === 'won'
@@ -509,15 +527,16 @@ export function GameScreen({ levelId, onWin, onExit }: Props) {
                 : message}
             </Text>
             {status === 'lost' && (
-              <Pressable style={styles.primaryBtn} onPress={reset}>
-                <Text style={styles.primaryBtnText}>Retry</Text>
+              <Pressable
+                style={({ pressed }) => [styles.primaryBtn, pressed && styles.pressed]}
+                onPress={reset}
+              >
+                <Text style={styles.primaryBtnText}>RETRY</Text>
               </Pressable>
             )}
-            {status === 'won' && (
-              <Text style={styles.modalNote}>Loading next…</Text>
-            )}
+            {status === 'won' && <Text style={styles.modalNote}>Loading next…</Text>}
             <Pressable style={styles.ghostBtn} onPress={onExit}>
-              <Text style={styles.ghostBtnText}>Levels</Text>
+              <Text style={styles.ghostBtnText}>DEPARTURES</Text>
             </Pressable>
           </View>
         </View>
@@ -530,83 +549,156 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bgDeep },
   hud: {
     paddingTop: 52,
-    paddingBottom: 10,
-    paddingHorizontal: 16,
+    paddingBottom: 12,
+    paddingHorizontal: 14,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    backgroundColor: colors.bg,
+    gap: 10,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.panelLine,
+    backgroundColor: 'rgba(8,10,14,0.62)',
   },
-  hudLink: { color: colors.aim, fontWeight: '700', width: 64 },
-  hudCenter: { flex: 1 },
-  hudTitle: { color: colors.text, fontWeight: '900', fontSize: 15 },
-  hudSub: { color: colors.textMuted, fontSize: 11, marginTop: 2 },
-  hudBounces: {
+  menuBtn: {
+    borderWidth: 1,
+    borderColor: colors.panelLine,
+    borderRadius: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+  },
+  menuText: {
     color: colors.accent,
-    fontWeight: '900',
+    fontFamily: fonts.mono,
+    fontSize: 11,
+    letterSpacing: 1.4,
+  },
+  hudCenter: { flex: 1 },
+  hudKicker: {
+    color: colors.accent,
+    fontFamily: fonts.mono,
+    fontSize: 9,
+    letterSpacing: 1.6,
+  },
+  hudTitle: {
+    color: colors.text,
+    fontFamily: fonts.display,
+    fontSize: 18,
+    marginTop: 1,
+  },
+  hudSub: { color: colors.textMuted, fontSize: 11, marginTop: 1 },
+  bounceBox: {
+    minWidth: 46,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.panelLine,
+    borderRadius: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    backgroundColor: 'rgba(228,196,138,0.06)',
+  },
+  bounceLabel: {
+    color: colors.textDim,
+    fontFamily: fonts.mono,
+    fontSize: 8,
+    letterSpacing: 1.2,
+  },
+  bounceValue: {
+    color: colors.accent,
+    fontFamily: fonts.mono,
     fontSize: 16,
-    minWidth: 52,
-    textAlign: 'right',
+    letterSpacing: 1,
   },
   play: {
     flex: 1,
-    backgroundColor: '#1a1440',
+    backgroundColor: 'transparent',
     overflow: 'hidden',
   },
   field: {
     position: 'absolute',
-    backgroundColor: colors.bg,
-    borderRadius: 12,
+    borderRadius: 16,
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(228,196,138,0.32)',
+  },
+  powerText: {
+    color: colors.fluorescent,
+    fontFamily: fonts.mono,
+    fontSize: 10,
+    letterSpacing: 1,
   },
   hint: {
     position: 'absolute',
-    bottom: 28,
+    bottom: 22,
     alignSelf: 'center',
     color: colors.textMuted,
-    fontWeight: '600',
-    backgroundColor: 'rgba(0,0,0,0.35)',
-    paddingHorizontal: 12,
+    fontSize: 12,
+    letterSpacing: 0.3,
+    backgroundColor: 'rgba(8,10,14,0.72)',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.panelLine,
+    paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 999,
     overflow: 'hidden',
   },
   overlay: {
     ...StyleSheet.absoluteFill,
-    backgroundColor: 'rgba(15,10,30,0.72)',
+    backgroundColor: 'rgba(7,8,12,0.72)',
     alignItems: 'center',
     justifyContent: 'center',
     padding: 24,
   },
   modal: {
     backgroundColor: colors.panel,
-    borderRadius: 20,
-    padding: 22,
+    borderRadius: 18,
+    paddingHorizontal: 22,
+    paddingVertical: 22,
     width: '100%',
     maxWidth: 360,
     alignItems: 'center',
-    gap: 10,
+    gap: 8,
     borderWidth: 1,
-    borderColor: colors.wall,
+    borderColor: colors.panelLine,
   },
-  modalEmoji: { fontSize: 40 },
-  modalTitle: { color: colors.text, fontWeight: '900', fontSize: 24 },
+  modalKicker: {
+    color: colors.accent,
+    fontFamily: fonts.mono,
+    fontSize: 12,
+    letterSpacing: 3,
+    marginBottom: 4,
+  },
+  modalTitle: {
+    color: colors.text,
+    fontFamily: fonts.display,
+    fontSize: 28,
+    textAlign: 'center',
+  },
   modalBody: {
     color: colors.textMuted,
     textAlign: 'center',
     lineHeight: 20,
     marginBottom: 6,
   },
-  modalNote: { color: colors.win, fontWeight: '700' },
+  modalNote: { color: colors.win, fontWeight: '600' },
   primaryBtn: {
     backgroundColor: colors.accent,
-    borderRadius: 14,
+    borderRadius: 12,
     paddingVertical: 12,
     paddingHorizontal: 28,
     width: '100%',
     alignItems: 'center',
   },
-  primaryBtnText: { color: '#1e1b4b', fontWeight: '900', fontSize: 16 },
+  primaryBtnText: {
+    color: '#1a140c',
+    fontWeight: '700',
+    fontSize: 14,
+    letterSpacing: 2.2,
+  },
+  pressed: { opacity: 0.88 },
   ghostBtn: { paddingVertical: 8 },
-  ghostBtnText: { color: colors.aim, fontWeight: '700' },
+  ghostBtnText: {
+    color: colors.accent,
+    fontFamily: fonts.mono,
+    fontSize: 12,
+    letterSpacing: 1.8,
+  },
 });
