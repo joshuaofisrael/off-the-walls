@@ -2,7 +2,7 @@
 
 A portrait puzzle game built with Expo (React Native). You play as **Max** — an energetic adult with ADD — and bounce him through a satirical salaryman shift until he reaches his ADHD meds.
 
-The campaign jokes about crowded commutes, fluorescent mazes, unpaid overtime, boss pings, and the last train home. Max does not get hurt. A red **REVIEW** stamp just sends the attempt back to your desk so you can aim again. The win is always the amber bottle.
+The campaign jokes about crowded commutes, fluorescent mazes, unpaid overtime, boss pings, and the last train home. Max does not get hurt. A red **REVIEW** stamp just sends the attempt back to your desk so you can aim again. The win is always the amber capsule.
 
 ## How to run (Expo Go)
 
@@ -21,7 +21,7 @@ The app is portrait only and stays inside the Expo Go runtime (no custom native 
 
 - **Drag** from Max to aim. Farther drag means more power. The aim dots shift from fluorescent cyan to overtime red.
 - **Release** to launch.
-- Max ricochets off partitions, train doors, and meeting paddles until he reaches the bottle (**win**) or the attempt is sent back to the desk (**retry**).
+- Max ricochets off partitions, train doors, and meeting paddles until he reaches the capsule (**win**) or the attempt is sent back to the desk (**retry**).
 - The HUD shows the chapter, the level, bounces left (⚡), and a cosmetic **UNPAID** clock. The clock does not end the attempt.
 - **SND / MUTE** on the title screen, the departures board, and the in-level HUD turns the radio off. The choice is saved on the device.
 
@@ -44,7 +44,7 @@ The win banner ducks the volume. On iOS the hardware silent switch is respected.
 | Train **DOOR** | Slides shut, then open. Wait for the gap |
 | Desk / platform belt | Conveyor. Arrows show the push |
 | Coffee slick | Brown puddle. You keep your speed |
-| **ELEV** shaft | Safe. Lifts you toward the bottle |
+| **ELEV** shaft | Safe. Lifts you toward the capsule |
 | Meeting paddle | Spinning bar that smacks you onward |
 | Red **REVIEW** | Performance-review trap. Retry, Max is fine |
 | Boss ping | A shove and a notification, mid-flight |
@@ -58,36 +58,54 @@ Progress unlocks one stop at a time and is stored on the device.
 1. **Badge In** — aim and bounce
 2. **Partition Bounce** — bank around a divider
 3. **Elevator Pitch** — safe elevator shaft
+4. **Stairwell Bounce** — three landings
+5. **Copy Room** — a boost pad by the copier
+6. **Service Elevator** — freight shaft on the left
 
 ### Commute Crush
 
-4. **Closing Doors** — time one pair of train doors
-5. **Rush Hour** — two gates, plus a sliding crowd bar
-6. **Moving Walkway** — belt into an elevator
+7. **Closing Doors** — time one pair of train doors
+8. **Rush Hour** — two gates, plus a sliding crowd bar
+9. **Moving Walkway** — belt into an elevator
+10. **Local Stop** — one wide door
+11. **Express Belt** — walkway into the uptown car
+12. **Polite Shove** — a sliding crowd bar and an open lane
 
 ### Office Maze
 
-7. **Cubicle Grid** — staggered partition gaps
-8. **Coffee Slick** — slide through a spill
-9. **Open Plan** — slick, boost pad, and a gap
+13. **Cubicle Grid** — staggered partition gaps
+14. **Coffee Slick** — slide through a spill
+15. **Open Plan** — slick, boost pad, and a gap
+16. **Break Room** — a wide coffee slick
+17. **Corner Boost** — two green pads
+18. **Quiet Carrel** — short partitions
 
 ### Overtime Clock
 
-10. **Meeting Paddle** — a spinning meeting
-11. **Unpaid Hours** — desk belt into the meeting
-12. **Double Booking** — two paddles at once
+19. **Meeting Paddle** — a spinning meeting
+20. **Unpaid Hours** — desk belt into the meeting
+21. **Double Booking** — two paddles at once
+22. **Standup Slot** — a shorter meeting
+23. **Night Desk** — desk belt into a late elevator
+24. **Agenda Item** — boost pad and a side paddle
 
 ### Boss Ping Gauntlet
 
-13. **ASAP ASAP** — boss pings shove Max
-14. **CC: Everyone** — reply-all reverse pads
-15. **Performance Review** — CC pad and a REVIEW trap
+25. **ASAP ASAP** — boss pings shove Max
+26. **CC: Everyone** — reply-all reverse pads
+27. **Performance Review** — CC pad and a REVIEW trap
+28. **One More Thing** — a single ping
+29. **Reply All** — a CC pad you can route around
+30. **Red Stamp** — a corner REVIEW and a boost pad
 
 ### Last Train
 
-16. **Last Train Home** — belt, doors, and the car elevator
-17. **Night Transfer** — slick platform, doors, and a paddle
-18. **Platform Meds** — the full shift, then the bottle
+31. **Last Train Home** — belt, doors, and the car elevator
+32. **Night Transfer** — slick platform, doors, and a paddle
+33. **Platform Meds** — the full shift, then the capsule
+34. **Side Platform** — the left-hand car
+35. **After Hours** — slick, boost, and a late ping
+36. **Capsule Call** — belt, door, elevator, capsule
 
 ## Tech
 

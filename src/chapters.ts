@@ -42,7 +42,7 @@ export const CHAPTERS: ChapterDef[] = [
     id: 'finale',
     index: '06',
     title: 'Last Train',
-    blurb: 'Catch the train home. The amber bottle is on the platform.',
+    blurb: 'Catch the train home. The amber capsule is on the platform.',
   },
 ];
 

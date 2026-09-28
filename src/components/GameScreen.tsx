@@ -174,8 +174,9 @@ export function GameScreen({ levelId, onWin, onExit }: Props) {
         </View>
         <View style={styles.hudRight}>
           <Text style={[styles.hudBounces, lowBounces && styles.hudBouncesHot]}>
-            ⚡ {Math.max(0, sim.bouncesLeft)}
+            {String(Math.max(0, sim.bouncesLeft)).padStart(2, '0')}
           </Text>
+          <Text style={styles.bounceLabel}>BOUNCES</Text>
           <Text style={styles.unpaid}>UNPAID {formatUnpaid(sim.elapsedMs)}</Text>
         </View>
       </View>
@@ -199,13 +200,13 @@ export function GameScreen({ levelId, onWin, onExit }: Props) {
       {(sim.status === 'won' || sim.status === 'lost') && (
         <View style={styles.overlay}>
           <View style={styles.modal}>
-            <Text style={styles.modalEmoji}>{sim.status === 'won' ? '💊' : '🏢'}</Text>
+            <Text style={styles.modalKicker}>{sim.status === 'won' ? 'CLEARED' : 'AGAIN'}</Text>
             <Text style={styles.modalTitle}>
               {sim.status === 'won' ? (level.winTitle ?? 'Meds Unlocked') : 'Back to Your Desk'}
             </Text>
             <Text style={styles.modalBody}>
               {sim.status === 'won'
-                ? (level.winBody ?? 'Chaotic path, solid finish. The bottle is yours, Max.')
+                ? (level.winBody ?? 'Chaotic path, solid finish. The capsule is yours, Max.')
                 : sim.message}
             </Text>
             {sim.status === 'lost' && (
@@ -246,8 +247,10 @@ const styles = StyleSheet.create({
   hudTitle: { color: colors.text, fontWeight: '900', fontSize: 16 },
   hudSub: { color: colors.textMuted, fontSize: 11, marginTop: 1 },
   hudRight: { alignItems: 'flex-end', minWidth: 78 },
-  hudBounces: { color: colors.accent, fontWeight: '900', fontSize: 16 },
+  hudBounces: { color: colors.accent, fontWeight: '800', fontSize: 18, letterSpacing: 0.6 },
   hudBouncesHot: { color: colors.accentHot },
+  bounceLabel: { color: colors.textMuted, fontSize: 8, fontWeight: '800', letterSpacing: 0.8 },
+  modalKicker: { color: colors.accent, fontSize: 12, fontWeight: '800', letterSpacing: 2.4 },
   unpaid: { color: colors.overtime, fontSize: 10, fontWeight: '800', letterSpacing: 0.4, marginTop: 2 },
   play: { flex: 1, backgroundColor: '#070b10', overflow: 'hidden' },
   hint: {
@@ -282,7 +285,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#3d4d63',
   },
-  modalEmoji: { fontSize: 36 },
   modalTitle: { color: colors.text, fontWeight: '900', fontSize: 24, textAlign: 'center' },
   modalBody: { color: colors.textMuted, textAlign: 'center', lineHeight: 20, marginBottom: 4 },
   modalNote: { color: colors.win, fontWeight: '700' },

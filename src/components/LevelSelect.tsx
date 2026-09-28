@@ -68,7 +68,7 @@ export function LevelSelect({ unlocked, onBack, onPick }: Props) {
                         </View>
                       )}
                     </View>
-                    <Text style={styles.chev}>{open ? '→' : '•'}</Text>
+                    <Text style={[styles.chev, open && styles.chevOpen]}>{open ? 'BOARD' : 'HOLD'}</Text>
                   </Pressable>
                 );
               })}
@@ -90,7 +90,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   back: { color: colors.aim, fontWeight: '700', fontSize: 16, width: 56 },
-  title: { color: colors.text, fontWeight: '900', fontSize: 22 },
+  title: { color: colors.text, fontWeight: '800', fontSize: 22, letterSpacing: 0.4 },
   list: { padding: 16, gap: 18, paddingBottom: 48 },
   chapter: { gap: 8 },
   chapterHead: {
@@ -133,5 +133,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     paddingVertical: 2,
   },
-  chev: { color: colors.text, fontSize: 18 },
+  chev: { color: colors.textMuted, fontSize: 10, fontWeight: '800', letterSpacing: 0.8 },
+  chevOpen: { color: colors.accent },
 });

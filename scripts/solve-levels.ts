@@ -208,7 +208,7 @@ function solve(level: LevelDef) {
 }
 
 function contentAndShape() {
-  assert(LEVELS.length >= 15, `expected at least 15 levels, got ${LEVELS.length}`);
+  assert(LEVELS.length >= 36, `expected at least 36 levels, got ${LEVELS.length}`);
   const ids = LEVELS.map((l) => l.id);
   assert(new Set(ids).size === ids.length, 'level ids must be unique');
   for (let i = 0; i < ids.length; i++) assert(ids[i] === i + 1, 'level ids should be 1..n');

@@ -57,6 +57,18 @@ export const colors = {
   trainLine: '#f5c518',
   overtime: '#fb7185',
   ink: '#0b0f16',
+  suit: '#5d7290',
+  suitDeep: '#3e5168',
+  suitLight: '#93a8bf',
+  shirt: '#f6f1e7',
+  tie: '#8d3a48',
+  tieDeep: '#6a2934',
+  skin: '#e4b48f',
+  skinDeep: '#c99268',
+  hair: '#1a140f',
+  leather: '#6b4a32',
+  leatherDeep: '#4a3222',
+  shoe: '#14181e',
 };
 
 export type ChapterTheme = {

@@ -3,6 +3,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useMusic } from '../audio/MusicProvider';
 import { CHAPTERS } from '../chapters';
 import { colors } from '../theme';
+import { MaxSprite } from './MaxSprite';
 import { SoundToggle } from './SoundToggle';
 
 type Props = {
@@ -24,6 +25,10 @@ export function TitleScreen({ onPlay, onLevels }: Props) {
       </View>
       <View style={styles.hero}>
         <View style={styles.tube} />
+        <View style={styles.stage}>
+          <View style={styles.shadow} />
+          <MaxSprite height={148} pose="idle" />
+        </View>
         <Text style={styles.kicker}>SALARYMAN SHIFT</Text>
         <Text style={styles.title}>Off The Walls</Text>
         <Text style={styles.sub}>
@@ -49,7 +54,7 @@ export function TitleScreen({ onPlay, onLevels }: Props) {
         <Text style={styles.cardLine}>Green pads boost. Blue CC pads bank you across the floor.</Text>
         <Text style={styles.cardLine}>Coffee slicks speed the slide. Elevator shafts are safe — they lift you.</Text>
         <Text style={styles.cardLine}>A red REVIEW stamp sends you back to your desk to retry.</Text>
-        <Text style={styles.cardHint}>Reach the amber bottle. Meds unlocked. The inbox can wait.</Text>
+        <Text style={styles.cardHint}>Reach the amber capsule. Meds unlocked. The inbox can wait.</Text>
         <Text style={styles.cardLine}>SND mutes the radio. The choice stays on this phone.</Text>
       </View>
 
@@ -77,6 +82,15 @@ const styles = StyleSheet.create({
     borderRadius: 99,
     backgroundColor: colors.fluorescent,
     marginBottom: 6,
+  },
+  stage: { height: 156, alignItems: 'center', justifyContent: 'flex-end' },
+  shadow: {
+    position: 'absolute',
+    bottom: 8,
+    width: 72,
+    height: 10,
+    borderRadius: 99,
+    backgroundColor: 'rgba(0,0,0,0.4)',
   },
   kicker: { color: colors.accent, fontWeight: '800', letterSpacing: 2, fontSize: 12 },
   title: { color: colors.text, fontSize: 40, fontWeight: '900', letterSpacing: -0.6 },
