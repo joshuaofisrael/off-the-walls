@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const KEY = 'off-the-walls:unlocked';
+/** v2 resets progress for the salaryman campaign (level ids were reused). */
+const KEY = 'off-the-walls:unlocked:v2';
 
 export async function loadUnlocked(): Promise<number> {
   try {
