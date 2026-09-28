@@ -1,201 +1,133 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { colors, fonts } from '../theme';
+import { useMusic } from '../audio/MusicProvider';
+import { CHAPTERS } from '../chapters';
+import { colors } from '../theme';
 import { MaxSprite } from './MaxSprite';
-import { OfficeBackdrop } from './office';
+import { SoundToggle } from './SoundToggle';
 
 type Props = {
   onPlay: () => void;
   onLevels: () => void;
 };
 
-const STEPS = [
-  { n: '01', t: 'Drag to aim. A longer pull is more power.' },
-  { n: '02', t: 'Release to launch. Ricochet off the walls.' },
-  { n: '03', t: 'Reach the bottle. Meds unlocked.' },
-];
-
 export function TitleScreen({ onPlay, onLevels }: Props) {
+  const { setBed } = useMusic();
+  useEffect(() => {
+    setBed('shift', false);
+  }, [setBed]);
+
   return (
-    <View style={styles.root}>
-      <OfficeBackdrop />
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.hero}>
-          <Text style={styles.kicker}>A SALARYMAN PUZZLE</Text>
-          <View style={styles.stage}>
-            <View style={styles.shadow} />
-            <MaxSprite height={168} pose="idle" />
+    <ScrollView style={styles.root} contentContainerStyle={styles.content}>
+      <View style={styles.topBar}>
+        <Text style={styles.radio}>SHIFT RADIO</Text>
+        <SoundToggle />
+      </View>
+      <View style={styles.hero}>
+        <View style={styles.tube} />
+        <View style={styles.stage}>
+          <View style={styles.shadow} />
+          <MaxSprite height={148} pose="idle" />
+        </View>
+        <Text style={styles.kicker}>SALARYMAN SHIFT</Text>
+        <Text style={styles.title}>Off The Walls</Text>
+        <Text style={styles.sub}>
+          Max has ADD, a commuter pass, and a boss who pings past midnight.{'\n'}
+          Bounce him through the overtime to his meds.
+        </Text>
+      </View>
+
+      <View style={styles.board}>
+        <Text style={styles.boardHead}>DEPARTURES</Text>
+        {CHAPTERS.map((ch) => (
+          <View key={ch.id} style={styles.boardRow}>
+            <Text style={styles.boardIndex}>{ch.index}</Text>
+            <Text style={styles.boardTitle}>{ch.title}</Text>
           </View>
-          <Text style={styles.title}>Off The Walls</Text>
-          <View style={styles.rule} />
-          <Text style={styles.sub}>
-            Max has ADD, a plan, and zero chill.{'\n'}
-            Bounce him to his meds.
-          </Text>
-        </View>
+        ))}
+      </View>
 
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>How to play</Text>
-          {STEPS.map((step) => (
-            <View key={step.n} style={styles.step}>
-              <Text style={styles.stepN}>{step.n}</Text>
-              <Text style={styles.stepT}>{step.t}</Text>
-            </View>
-          ))}
-          <Text style={styles.cardHint}>
-            Warm, chaotic, affirming — never mocking. You and Max got this.
-          </Text>
-        </View>
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>How to play</Text>
+        <Text style={styles.cardLine}>Drag from Max to aim. Farther means more power.</Text>
+        <Text style={styles.cardLine}>Train doors slide. Wait for the gap, then launch.</Text>
+        <Text style={styles.cardLine}>Green pads boost. Blue CC pads bank you across the floor.</Text>
+        <Text style={styles.cardLine}>Coffee slicks speed the slide. Elevator shafts are safe — they lift you.</Text>
+        <Text style={styles.cardLine}>A red REVIEW stamp sends you back to your desk to retry.</Text>
+        <Text style={styles.cardHint}>Reach the amber bottle. Meds unlocked. The inbox can wait.</Text>
+        <Text style={styles.cardLine}>SND mutes the radio. The choice stays on this phone.</Text>
+      </View>
 
-        <View style={styles.actions}>
-          <Pressable
-            onPress={onPlay}
-            style={({ pressed }) => [styles.primary, pressed && styles.pressed]}
-          >
-            <LinearGradient
-              colors={['#f0d7a8', '#e4c48a', '#c6a36a']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.primaryFill}
-            >
-              <Text style={styles.primaryText}>PLAY</Text>
-            </LinearGradient>
-          </Pressable>
-          <Pressable
-            onPress={onLevels}
-            style={({ pressed }) => [styles.secondary, pressed && styles.pressed]}
-          >
-            <Text style={styles.secondaryText}>DEPARTURES</Text>
-          </Pressable>
-        </View>
+      <Pressable style={styles.primary} onPress={onPlay} accessibilityRole="button">
+        <Text style={styles.primaryText}>Badge In</Text>
+      </Pressable>
+      <Pressable style={styles.secondary} onPress={onLevels} accessibilityRole="button">
+        <Text style={styles.secondaryText}>Level Select</Text>
+      </Pressable>
 
-        <Text style={styles.credit}>JOSHUA ISRAEL VENTURES LLC</Text>
-      </ScrollView>
-    </View>
+      <Text style={styles.credit}>Joshua Israel Ventures LLC</Text>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bgDeep },
-  scroll: {
-    flexGrow: 1,
-    paddingHorizontal: 24,
-    paddingTop: 54,
-    paddingBottom: 28,
-    justifyContent: 'space-between',
-    gap: 18,
-  },
-  hero: { alignItems: 'center' },
-  kicker: {
-    color: colors.accent,
-    fontFamily: fonts.mono,
-    fontSize: 11,
-    letterSpacing: 3.2,
+  content: { paddingHorizontal: 22, paddingTop: 52, paddingBottom: 36, gap: 16 },
+  topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  radio: { color: colors.textMuted, fontSize: 11, fontWeight: '800', letterSpacing: 1.4 },
+  hero: { alignItems: 'center', gap: 8 },
+  tube: {
+    width: 140,
+    height: 8,
+    borderRadius: 99,
+    backgroundColor: colors.fluorescent,
     marginBottom: 6,
   },
-  stage: {
-    height: 176,
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-  },
+  stage: { height: 156, alignItems: 'center', justifyContent: 'flex-end' },
   shadow: {
     position: 'absolute',
-    bottom: 10,
-    width: 78,
-    height: 12,
+    bottom: 8,
+    width: 72,
+    height: 10,
     borderRadius: 99,
-    backgroundColor: 'rgba(0,0,0,0.45)',
+    backgroundColor: 'rgba(0,0,0,0.4)',
   },
-  title: {
-    color: colors.text,
-    fontFamily: fonts.display,
-    fontSize: 40,
-    fontWeight: '500',
-    letterSpacing: 0.2,
-    marginTop: 4,
-  },
-  rule: {
-    marginTop: 8,
-    width: 42,
-    height: 1,
-    backgroundColor: colors.accent,
-  },
-  sub: {
-    color: colors.textMuted,
-    fontFamily: fonts.display,
-    fontStyle: 'italic',
-    textAlign: 'center',
-    fontSize: 16,
-    lineHeight: 24,
-    marginTop: 10,
-  },
-  card: {
-    backgroundColor: colors.glass,
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    borderWidth: 1,
-    borderColor: colors.panelLine,
-    gap: 10,
-  },
-  cardTitle: {
-    color: colors.text,
-    fontFamily: fonts.display,
-    fontSize: 18,
-    marginBottom: 2,
-  },
-  step: { flexDirection: 'row', gap: 12, alignItems: 'flex-start' },
-  stepN: {
-    color: colors.accent,
-    fontFamily: fonts.mono,
-    fontSize: 12,
-    letterSpacing: 1,
-    width: 24,
-    marginTop: 2,
-  },
-  stepT: { color: colors.textMuted, fontSize: 14, lineHeight: 20, flex: 1 },
-  cardHint: {
-    color: colors.accentHot,
-    fontSize: 13,
-    lineHeight: 18,
-    marginTop: 4,
-  },
-  actions: { gap: 10 },
-  primary: { borderRadius: 14, overflow: 'hidden' },
-  primaryFill: {
-    paddingVertical: 16,
-    alignItems: 'center',
-  },
-  primaryText: {
-    color: '#1a140c',
-    fontWeight: '700',
-    fontSize: 15,
-    letterSpacing: 3,
-  },
-  secondary: {
+  kicker: { color: colors.accent, fontWeight: '800', letterSpacing: 2, fontSize: 12 },
+  title: { color: colors.text, fontSize: 40, fontWeight: '900', letterSpacing: -0.6 },
+  sub: { color: colors.textMuted, textAlign: 'center', fontSize: 16, lineHeight: 23 },
+  board: {
+    backgroundColor: '#101610',
     borderRadius: 14,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: '#345c34',
+    gap: 4,
+  },
+  boardHead: { color: '#86efac', fontSize: 11, fontWeight: '800', letterSpacing: 1.6, marginBottom: 4 },
+  boardRow: { flexDirection: 'row', gap: 10, alignItems: 'center' },
+  boardIndex: { color: colors.accent, fontWeight: '800', width: 28, fontVariant: ['tabular-nums'] },
+  boardTitle: { color: '#d1fae5', fontWeight: '700', fontSize: 14 },
+  card: {
+    backgroundColor: colors.panel,
+    borderRadius: 18,
+    padding: 16,
+    gap: 7,
+    borderWidth: 1,
+    borderColor: '#334155',
+  },
+  cardTitle: { color: colors.text, fontWeight: '800', fontSize: 18, marginBottom: 2 },
+  cardLine: { color: colors.textMuted, fontSize: 14, lineHeight: 20 },
+  cardHint: { color: colors.accent, fontSize: 13, marginTop: 6, fontWeight: '700' },
+  primary: { backgroundColor: colors.accent, borderRadius: 16, paddingVertical: 16, alignItems: 'center' },
+  primaryText: { color: colors.ink, fontWeight: '900', fontSize: 18 },
+  secondary: {
+    borderRadius: 16,
     paddingVertical: 14,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.panelLine,
-    backgroundColor: 'rgba(255,255,255,0.03)',
+    borderWidth: 2,
+    borderColor: '#3d4d63',
   },
-  secondaryText: {
-    color: colors.text,
-    fontWeight: '600',
-    fontSize: 13,
-    letterSpacing: 2.4,
-  },
-  pressed: { opacity: 0.86, transform: [{ scale: 0.985 }] },
-  credit: {
-    color: colors.textDim,
-    textAlign: 'center',
-    fontFamily: fonts.mono,
-    fontSize: 10,
-    letterSpacing: 1.6,
-  },
+  secondaryText: { color: colors.text, fontWeight: '700', fontSize: 16 },
+  credit: { color: colors.textMuted, textAlign: 'center', fontSize: 12, opacity: 0.75 },
 });

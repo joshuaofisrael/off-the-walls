@@ -1,6 +1,7 @@
 import { StatusBar } from 'expo-status-bar';
 import React, { useCallback, useEffect, useState } from 'react';
 import { SafeAreaView, StyleSheet, View } from 'react-native';
+import { MusicProvider } from './src/audio/MusicProvider';
 import { GameScreen } from './src/components/GameScreen';
 import { LevelSelect } from './src/components/LevelSelect';
 import { TitleScreen } from './src/components/TitleScreen';
@@ -36,31 +37,33 @@ export default function App() {
   }, []);
 
   return (
-    <View style={styles.root}>
-      <StatusBar style="light" />
-      <SafeAreaView style={styles.safe}>
-        {screen === 'title' && (
-          <TitleScreen
-            onPlay={() => startLevel(Math.min(unlocked, LEVELS[LEVELS.length - 1].id))}
-            onLevels={() => setScreen('levels')}
-          />
-        )}
-        {screen === 'levels' && (
-          <LevelSelect
-            unlocked={unlocked}
-            onBack={() => setScreen('title')}
-            onPick={startLevel}
-          />
-        )}
-        {screen === 'game' && (
-          <GameScreen
-            levelId={levelId}
-            onWin={onWin}
-            onExit={() => setScreen('levels')}
-          />
-        )}
-      </SafeAreaView>
-    </View>
+    <MusicProvider>
+      <View style={styles.root}>
+        <StatusBar style="light" />
+        <SafeAreaView style={styles.safe}>
+          {screen === 'title' && (
+            <TitleScreen
+              onPlay={() => startLevel(Math.min(unlocked, LEVELS[LEVELS.length - 1].id))}
+              onLevels={() => setScreen('levels')}
+            />
+          )}
+          {screen === 'levels' && (
+            <LevelSelect
+              unlocked={unlocked}
+              onBack={() => setScreen('title')}
+              onPick={startLevel}
+            />
+          )}
+          {screen === 'game' && (
+            <GameScreen
+              levelId={levelId}
+              onWin={onWin}
+              onExit={() => setScreen('levels')}
+            />
+          )}
+        </SafeAreaView>
+      </View>
+    </MusicProvider>
   );
 }
 

@@ -1,8 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useMusic } from '../audio/MusicProvider';
+import { CHAPTERS } from '../chapters';
 import { LEVELS } from '../levels';
-import { colors, fonts } from '../theme';
-import { OfficeBackdrop } from './office';
+import { chapterTheme, colors } from '../theme';
+import { SoundToggle } from './SoundToggle';
 
 type Props = {
   unlocked: number;
@@ -10,249 +12,127 @@ type Props = {
   onPick: (levelId: number) => void;
 };
 
-function useClock() {
-  const [now, setNow] = useState(() => new Date());
-  useEffect(() => {
-    const t = setInterval(() => setNow(new Date()), 15000);
-    return () => clearInterval(t);
-  }, []);
-  return now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-}
-
 export function LevelSelect({ unlocked, onBack, onPick }: Props) {
-  const time = useClock();
+  const { setBed } = useMusic();
+  useEffect(() => {
+    setBed('shift', false);
+  }, [setBed]);
 
   return (
     <View style={styles.root}>
-      <OfficeBackdrop />
       <View style={styles.header}>
-        <Pressable onPress={onBack} hitSlop={12} style={styles.backBtn}>
-          <View style={styles.chev} />
-          <Text style={styles.back}>BACK</Text>
+        <Pressable onPress={onBack} hitSlop={12} accessibilityRole="button">
+          <Text style={styles.back}>← Back</Text>
         </Pressable>
-        <Text style={styles.headerMeta}>FOCUS LINE</Text>
+        <Text style={styles.title}>Departures</Text>
+        <SoundToggle />
       </View>
-
-      <View style={styles.board}>
-        <View style={styles.boardTop}>
-          <View>
-            <Text style={styles.kicker}>TERMINAL B</Text>
-            <Text style={styles.title}>DEPARTURES</Text>
-          </View>
-          <View style={styles.clockBlock}>
-            <View style={styles.led} />
-            <Text style={styles.clock}>{time}</Text>
-            <Text style={styles.clockLabel}>LOCAL</Text>
-          </View>
-        </View>
-
-        <View style={styles.columns}>
-          <Text style={[styles.col, styles.colGate]}>GATE</Text>
-          <Text style={[styles.col, styles.colDest]}>DESTINATION</Text>
-          <Text style={[styles.col, styles.colStatus]}>STATUS</Text>
-        </View>
-
-        <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
-          {LEVELS.map((lvl) => {
-            const open = lvl.id <= unlocked;
-            return (
-              <Pressable
-                key={lvl.id}
-                disabled={!open}
-                onPress={() => onPick(lvl.id)}
-                style={({ pressed }) => [
-                  styles.row,
-                  !open && styles.rowLocked,
-                  pressed && open && styles.rowPressed,
-                ]}
-              >
-                <Text style={styles.gate}>{String(lvl.id).padStart(2, '0')}</Text>
-                <View style={styles.dest}>
-                  <Text style={styles.name} numberOfLines={1}>
-                    {open ? lvl.name : '— — —'}
-                  </Text>
-                  <Text style={styles.tag} numberOfLines={2}>
-                    {open ? lvl.tagline : 'Clear the previous gate to board'}
-                  </Text>
-                </View>
-                <View style={[styles.status, open ? styles.statusOpen : styles.statusHold]}>
-                  <Text style={[styles.statusText, open && styles.statusTextOpen]}>
-                    {open ? 'BOARD' : 'HOLD'}
-                  </Text>
-                </View>
-              </Pressable>
-            );
-          })}
-        </ScrollView>
-
-        <Text style={styles.foot}>
-          {String(LEVELS.length).padStart(2, '0')} GATES · CLEAR TO ADVANCE
-        </Text>
-      </View>
+      <ScrollView contentContainerStyle={styles.list}>
+        {CHAPTERS.map((ch) => {
+          const theme = chapterTheme[ch.id];
+          const levels = LEVELS.filter((l) => l.chapter === ch.id);
+          return (
+            <View key={ch.id} style={styles.chapter}>
+              <View style={[styles.chapterHead, { borderLeftColor: theme.rail }]}>
+                <Text style={[styles.chapterKicker, { color: theme.kicker }]}>
+                  {ch.index}  {ch.title.toUpperCase()}
+                </Text>
+                <Text style={styles.chapterBlurb}>{ch.blurb}</Text>
+              </View>
+              {levels.map((lvl) => {
+                const open = lvl.id <= unlocked;
+                return (
+                  <Pressable
+                    key={lvl.id}
+                    disabled={!open}
+                    onPress={() => onPick(lvl.id)}
+                    accessibilityRole="button"
+                    accessibilityState={{ disabled: !open }}
+                    style={[styles.row, !open && styles.rowLocked]}
+                  >
+                    <View style={[styles.badge, { backgroundColor: open ? theme.rail : '#334155' }]}>
+                      <Text style={styles.badgeText}>{lvl.id}</Text>
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.name}>{open ? lvl.name : 'Locked'}</Text>
+                      <Text style={styles.tag} numberOfLines={2}>
+                        {open ? lvl.tagline : 'Clear the previous stop to unlock'}
+                      </Text>
+                      {open && (
+                        <View style={styles.pills}>
+                          {lvl.mechanics.map((m) => (
+                            <Text key={m} style={styles.pill}>
+                              {m}
+                            </Text>
+                          ))}
+                        </View>
+                      )}
+                    </View>
+                    <Text style={[styles.chev, open && styles.chevOpen]}>{open ? 'BOARD' : 'HOLD'}</Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          );
+        })}
+      </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: colors.bgDeep,
-    paddingTop: 52,
-    paddingHorizontal: 16,
-    paddingBottom: 18,
-  },
+  root: { flex: 1, backgroundColor: colors.bgDeep, paddingTop: 52 },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 14,
+    paddingHorizontal: 20,
+    marginBottom: 8,
   },
-  backBtn: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  chev: {
-    width: 7,
-    height: 7,
-    borderLeftWidth: 1.5,
-    borderBottomWidth: 1.5,
-    borderColor: colors.accent,
-    transform: [{ rotate: '45deg' }],
-  },
-  back: {
-    color: colors.accent,
-    fontFamily: fonts.mono,
-    fontSize: 12,
-    letterSpacing: 1.8,
-  },
-  headerMeta: {
-    color: colors.textDim,
-    fontFamily: fonts.mono,
-    fontSize: 11,
-    letterSpacing: 2,
-  },
-  board: {
-    flex: 1,
-    backgroundColor: 'rgba(8,10,14,0.88)',
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: colors.panelLine,
-    paddingHorizontal: 14,
-    paddingTop: 16,
-    paddingBottom: 12,
-  },
-  boardTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
-    marginBottom: 14,
-  },
-  kicker: {
-    color: colors.textDim,
-    fontFamily: fonts.mono,
-    fontSize: 10,
-    letterSpacing: 2.4,
-  },
-  title: {
-    color: colors.accent,
-    fontFamily: fonts.mono,
-    fontSize: 26,
-    letterSpacing: 3,
-    marginTop: 2,
-  },
-  clockBlock: { alignItems: 'flex-end', gap: 2 },
-  led: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: colors.accent,
+  back: { color: colors.aim, fontWeight: '700', fontSize: 16, width: 56 },
+  title: { color: colors.text, fontWeight: '800', fontSize: 22, letterSpacing: 0.4 },
+  list: { padding: 16, gap: 18, paddingBottom: 48 },
+  chapter: { gap: 8 },
+  chapterHead: {
+    borderLeftWidth: 3,
+    paddingLeft: 10,
     marginBottom: 2,
+    marginTop: 4,
   },
-  clock: {
-    color: colors.fluorescent,
-    fontFamily: fonts.mono,
-    fontSize: 16,
-    letterSpacing: 1,
-  },
-  clockLabel: {
-    color: colors.textDim,
-    fontFamily: fonts.mono,
-    fontSize: 9,
-    letterSpacing: 1.6,
-  },
-  columns: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingBottom: 8,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: 'rgba(228,196,138,0.28)',
-  },
-  col: {
-    color: colors.textDim,
-    fontFamily: fonts.mono,
-    fontSize: 10,
-    letterSpacing: 1.4,
-  },
-  colGate: { width: 44 },
-  colDest: { flex: 1 },
-  colStatus: { width: 58, textAlign: 'right' },
-  list: { paddingTop: 4, paddingBottom: 8 },
+  chapterKicker: { fontWeight: '900', letterSpacing: 1.2, fontSize: 12 },
+  chapterBlurb: { color: colors.textMuted, fontSize: 12, marginTop: 2, lineHeight: 17 },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    paddingVertical: 12,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: 'rgba(255,255,255,0.06)',
-  },
-  rowLocked: { opacity: 0.42 },
-  rowPressed: { backgroundColor: 'rgba(228,196,138,0.06)' },
-  gate: {
-    width: 44,
-    color: colors.accent,
-    fontFamily: fonts.mono,
-    fontSize: 18,
-    letterSpacing: 1,
-  },
-  dest: { flex: 1, paddingRight: 8 },
-  name: {
-    color: colors.fluorescent,
-    fontFamily: fonts.mono,
-    fontSize: 13,
-    letterSpacing: 0.8,
-    textTransform: 'uppercase',
-  },
-  tag: {
-    color: colors.textMuted,
-    fontSize: 12,
-    lineHeight: 16,
-    marginTop: 3,
-  },
-  status: {
-    minWidth: 58,
-    paddingVertical: 4,
-    paddingHorizontal: 6,
-    borderRadius: 2,
+    gap: 12,
+    backgroundColor: colors.panel,
+    borderRadius: 16,
+    padding: 12,
     borderWidth: 1,
+    borderColor: '#334155',
+  },
+  rowLocked: { opacity: 0.45 },
+  badge: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  statusOpen: {
-    borderColor: 'rgba(228,196,138,0.7)',
-    backgroundColor: 'rgba(228,196,138,0.1)',
-  },
-  statusHold: {
-    borderColor: 'rgba(255,255,255,0.12)',
-  },
-  statusText: {
-    fontFamily: fonts.mono,
+  badgeText: { color: colors.ink, fontWeight: '900' },
+  name: { color: colors.text, fontWeight: '800', fontSize: 16 },
+  tag: { color: colors.textMuted, fontSize: 12, marginTop: 2 },
+  pills: { flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: 6 },
+  pill: {
+    color: colors.accent,
     fontSize: 10,
-    letterSpacing: 1,
-    color: colors.textDim,
+    fontWeight: '800',
+    backgroundColor: 'rgba(245,197,24,0.12)',
+    overflow: 'hidden',
+    borderRadius: 999,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
   },
-  statusTextOpen: { color: colors.accent },
-  foot: {
-    color: colors.textDim,
-    fontFamily: fonts.mono,
-    fontSize: 10,
-    letterSpacing: 1.5,
-    textAlign: 'center',
-    marginTop: 8,
-  },
+  chev: { color: colors.textMuted, fontSize: 10, fontWeight: '800', letterSpacing: 0.8 },
+  chevOpen: { color: colors.accent },
 });
