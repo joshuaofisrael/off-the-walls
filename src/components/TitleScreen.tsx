@@ -54,7 +54,7 @@ export function TitleScreen({ onPlay, onLevels }: Props) {
         <Text style={styles.cardLine}>Green pads boost. Blue CC pads bank you across the floor.</Text>
         <Text style={styles.cardLine}>Coffee slicks speed the slide. Elevator shafts are safe — they lift you.</Text>
         <Text style={styles.cardLine}>A red REVIEW stamp sends you back to your desk to retry.</Text>
-        <Text style={styles.cardHint}>Reach the amber bottle. Meds unlocked. The inbox can wait.</Text>
+        <Text style={styles.cardHint}>Reach the amber capsule. Meds unlocked. The inbox can wait.</Text>
         <Text style={styles.cardLine}>SND mutes the radio. The choice stays on this phone.</Text>
       </View>
 

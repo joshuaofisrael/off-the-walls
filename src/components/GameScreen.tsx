@@ -206,7 +206,7 @@ export function GameScreen({ levelId, onWin, onExit }: Props) {
             </Text>
             <Text style={styles.modalBody}>
               {sim.status === 'won'
-                ? (level.winBody ?? 'Chaotic path, solid finish. The bottle is yours, Max.')
+                ? (level.winBody ?? 'Chaotic path, solid finish. The capsule is yours, Max.')
                 : sim.message}
             </Text>
             {sim.status === 'lost' && (

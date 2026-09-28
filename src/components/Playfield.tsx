@@ -83,7 +83,7 @@ export function Playfield({ level, sim, worldMs, aim, aimFinger, sx }: Props) {
             </View>
           );
         })}
-        <Bottle goal={level.goal} radius={level.goalRadius} sx={sx} />
+        <Capsule goal={level.goal} radius={level.goalRadius} sx={sx} />
         {sim.trail.map((p, i) => {
           const t = (i + 1) / sim.trail.length;
           const size = (2.5 + t * 7) * sx;
@@ -400,56 +400,69 @@ function WallView({ wall, sx, train }: { wall: Wall; sx: number; train: boolean 
   );
 }
 
-function Bottle({ goal, radius, sx }: { goal: Vec; radius: number; sx: number }) {
-  const w = radius * 1.15 * sx;
-  const h = radius * 1.7 * sx;
+function Capsule({ goal, radius, sx }: { goal: Vec; radius: number; sx: number }) {
+  const h = Math.max(16, radius * 1.05 * sx);
+  const w = h * 2.35;
+  const box = radius * 2.35 * sx;
   return (
     <View
       style={{
         position: 'absolute',
-        left: (goal.x - radius) * sx,
-        top: (goal.y - radius) * sx,
-        width: radius * 2 * sx,
-        height: radius * 2 * sx,
+        left: goal.x * sx - box / 2,
+        top: goal.y * sx - box / 2,
+        width: box,
+        height: box,
         alignItems: 'center',
         justifyContent: 'center',
       }}
     >
       <View
         style={{
+          position: 'absolute',
+          width: w * 1.18,
+          height: h * 1.7,
+          borderRadius: 999,
+          backgroundColor: 'rgba(245, 197, 24, 0.42)',
+        }}
+      />
+      <View
+        style={{
           width: w,
           height: h,
-          backgroundColor: colors.goal,
-          borderRadius: 5 * sx,
-          borderWidth: 1.5,
-          borderColor: '#b45309',
-          alignItems: 'center',
+          borderRadius: h / 2,
+          overflow: 'hidden',
+          flexDirection: 'row',
+          borderWidth: Math.max(1.5, 1.25 * sx),
+          borderColor: '#7c3a12',
+          backgroundColor: '#fffaf3',
         }}
       >
+        <View style={{ flex: 1, backgroundColor: colors.goal }}>
+          <View
+            style={{
+              position: 'absolute',
+              left: h * 0.18,
+              right: 2,
+              top: h * 0.16,
+              height: h * 0.28,
+              borderRadius: 99,
+              backgroundColor: 'rgba(255,255,255,0.45)',
+            }}
+          />
+        </View>
+        <View style={{ flex: 1, backgroundColor: '#fffaf3', alignItems: 'center', justifyContent: 'center' }}>
+          <Text style={{ color: colors.goalLabel, fontWeight: '900', fontSize: Math.max(9, h * 0.46) }}>Rx</Text>
+        </View>
         <View
           style={{
-            marginTop: -5 * sx,
-            width: w * 0.72,
-            height: 8 * sx,
-            backgroundColor: colors.goalCap,
-            borderRadius: 2,
-            borderWidth: 1,
-            borderColor: '#cbd5e1',
+            position: 'absolute',
+            left: w / 2 - Math.max(1, sx * 0.6),
+            top: h * 0.1,
+            width: Math.max(1.5, sx),
+            height: h * 0.8,
+            backgroundColor: 'rgba(90, 48, 16, 0.38)',
           }}
         />
-        <View
-          style={{
-            marginTop: 4 * sx,
-            width: w * 0.72,
-            height: h * 0.42,
-            backgroundColor: '#fffaf0',
-            borderRadius: 2,
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <Text style={{ color: colors.goalLabel, fontWeight: '800', fontSize: Math.max(8, 9 * sx) }}>Rx</Text>
-        </View>
       </View>
     </View>
   );
